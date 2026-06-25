@@ -154,6 +154,31 @@ body{display:flex;align-items:stretch;justify-content:center;padding:8px}
 }
 .del:hover{color:var(--red)}
 .empty{color:#90a8c0;font-style:italic;font-size:1rem;text-align:center;padding:18px 0}
+.save-row{display:flex;gap:8px;flex-shrink:0}
+.btn-save{
+  flex:1;padding:11px 14px;border:none;border-radius:10px;
+  background:linear-gradient(135deg,#1e5c30,#27ae60);
+  color:#fff;font-family:'Source Serif 4',Georgia,serif;
+  font-size:0.95rem;font-weight:900;letter-spacing:.05em;
+  cursor:pointer;transition:all .2s;
+  box-shadow:0 3px 10px rgba(30,92,48,.3);
+}
+.btn-save:hover{background:linear-gradient(135deg,#27ae60,#1e5c30);transform:translateY(-1px)}
+.btn-reset{
+  padding:11px 14px;border:2px solid #c0d8e8;border-radius:10px;
+  background:transparent;color:#5a7090;
+  font-family:'Source Serif 4',Georgia,serif;
+  font-size:0.88rem;font-weight:700;cursor:pointer;transition:all .2s;
+}
+.btn-reset:hover{border-color:var(--red);color:var(--red)}
+.save-toast{
+  text-align:center;font-size:0.82rem;font-weight:700;
+  color:#1e5c30;background:#d4f0de;border-radius:8px;
+  padding:7px 12px;display:none;flex-shrink:0;
+  animation:fadeIn .3s ease;
+}
+.save-toast.show{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
 
 /* FOOTER */
 .footer{
@@ -213,6 +238,11 @@ body{display:flex;align-items:stretch;justify-content:center;padding:8px}
         <button class="add-btn" onclick="add()" title="Adicionar">+</button>
       </div>
       <ul class="items" id="items"></ul>
+      <div class="save-row">
+        <button class="btn-save" onclick="saveItems()">&#128190; Guardar Op&ccedil;&otilde;es</button>
+        <button class="btn-reset" onclick="resetItems()" title="Repor padr&atilde;o">&#8635;</button>
+      </div>
+      <div class="save-toast" id="saveToast">&#10003; Op&ccedil;&otilde;es guardadas!</div>
     </div>
   </div>
 
@@ -230,8 +260,32 @@ const COLS=['#1d3a5f','#f5b700','#2e6da4','#e8a000','#1a5276',
   '#ffc300','#154360','#d4ac0d','#2980b9','#f39c12',
   '#1abc9c','#e74c3c','#8e44ad','#27ae60','#c0392b'];
 
-let items=['Torres Vedras','Badaladas','Feira de S. Pedro',
+const DEFAULT_ITEMS=['Torres Vedras','Badaladas','Feira de S. Pedro',
   'Prémio Surpresa','Outra Vez!','Boa Sorte!'];
+const STORAGE_KEY='roleta_badaladas_items';
+let items=loadItems();
+
+function loadItems(){
+  try{
+    const saved=localStorage.getItem(STORAGE_KEY);
+    if(saved){const arr=JSON.parse(saved);if(Array.isArray(arr)&&arr.length)return arr;}
+  }catch(e){}
+  return [...DEFAULT_ITEMS];
+}
+function saveItems(){
+  try{
+    localStorage.setItem(STORAGE_KEY,JSON.stringify(items));
+    const toast=document.getElementById('saveToast');
+    toast.className='save-toast show';
+    setTimeout(()=>{toast.className='save-toast';},2200);
+  }catch(e){alert('Erro ao guardar: '+e.message);}
+}
+function resetItems(){
+  if(!confirm('Repor as opções padrão? As alterações guardadas serão perdidas.'))return;
+  localStorage.removeItem(STORAGE_KEY);
+  items=[...DEFAULT_ITEMS];
+  renderList();
+}
 let spinning=false,angle=0;
 const cv=document.getElementById('wheelCanvas');
 const ctx=cv.getContext('2d');
