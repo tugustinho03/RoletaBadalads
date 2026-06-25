@@ -233,7 +233,7 @@ body{display:flex;align-items:stretch;justify-content:center;padding:8px}
     <div class="panel">
       <div class="panel-title">&#127381; Op&ccedil;&otilde;es</div>
       <div class="add-row">
-        <input class="add-inp" id="addInp" placeholder="Adicionar&hellip;" maxlength="26"
+        <input class="add-inp" id="addInp" placeholder="Adicionar&hellip;" maxlength="50"
           onkeydown="if(event.key==='Enter')add()">
         <button class="add-btn" onclick="add()" title="Adicionar">+</button>
       </div>
@@ -315,23 +315,76 @@ function draw(){
     ctx.beginPath();ctx.moveTo(cx,cx);ctx.arc(cx,cx,r,s,e);
     ctx.closePath();ctx.fillStyle=c;ctx.fill();
     ctx.strokeStyle='#fff';ctx.lineWidth=3;ctx.stroke();
-    ctx.save();ctx.translate(cx,cx);ctx.rotate(s+sl/2);
-    ctx.textAlign='right';ctx.textBaseline='middle';
-    ctx.fillStyle='#fff';
-    ctx.shadowColor='rgba(0,0,0,.75)';ctx.shadowBlur=8;
-    // Auto-fit: start large, shrink to fit the segment
-    // Max available width along radius, then arc-height cap
-    const maxW = r * 0.80;
-    const arcH = 2 * (r * 0.6) * Math.sin(sl / 2) * 0.85;
-    const lbl = item.length > 20 ? item.slice(0,19)+'…' : item;
-    let fs = Math.min(Math.round(r * 0.22), Math.round(arcH * 0.75));
-    fs = Math.max(fs, 14);
-    ctx.font=`900 ${fs}px Source Serif 4,Georgia,serif`;
-    while(ctx.measureText(lbl).width > maxW && fs > 12) {
-      fs -= 2;
-      ctx.font=`900 ${fs}px Source Serif 4,Georgia,serif`;
+    // Detect if segment is in left half (text would appear upside-down without correction)
+    const midAngle = ((s + sl/2) % (Math.PI*2) + Math.PI*2) % (Math.PI*2);
+    const isLeft = midAngle > Math.PI/2 && midAngle < Math.PI*3/2;
+    ctx.save();
+    ctx.translate(cx, cx);
+    ctx.rotate(s + sl/2);
+    if (isLeft) ctx.rotate(Math.PI);
+
+    // Radial zone: from hub edge (36px) to outer rim (r - 14px), centered
+    const hubR = 36, rimPad = 14;
+    const zoneStart = hubR, zoneEnd = r - rimPad;
+    const zoneMid = (zoneStart + zoneEnd) / 2;   // radial center of text
+    const availW = (zoneEnd - zoneStart) * 0.88;  // usable width along radius
+    const arcH   = 2 * r * Math.sin(sl / 2) * 0.72; // arc height at this radius
+
+    // Word-wrap: split text into lines fitting availW at given fontSize
+    function wrapText(text, fontSize) {
+      ctx.font = `700 ${fontSize}px Source Serif 4,Georgia,serif`;
+      const words = text.split(' ');
+      const lines = [];
+      let cur = '';
+      for (const w of words) {
+        const test = cur ? cur + ' ' + w : w;
+        if (ctx.measureText(test).width > availW && cur) {
+          lines.push(cur); cur = w;
+        } else { cur = test; }
+      }
+      if (cur) lines.push(cur);
+      return lines;
     }
-    ctx.fillText(lbl, r - 14, 0);
+
+    // Start with a generous font size and shrink until everything fits
+    let fs = Math.min(Math.round(availW * 0.23), Math.round(arcH * 0.48));
+    fs = Math.max(fs, 10);
+    let lines = wrapText(item, fs);
+
+    // Shrink for vertical overflow
+    while (lines.length * fs * 1.28 > arcH && fs > 9) {
+      fs -= 1; lines = wrapText(item, fs);
+    }
+    // Shrink for horizontal overflow (any single line too wide)
+    let anyOverflow = true;
+    while (anyOverflow && fs > 9) {
+      anyOverflow = false;
+      ctx.font = `700 ${fs}px Source Serif 4,Georgia,serif`;
+      for (const line of lines) {
+        if (ctx.measureText(line).width > availW) {
+          fs -= 1; lines = wrapText(item, fs); anyOverflow = true; break;
+        }
+      }
+    }
+    // Final vertical recheck
+    while (lines.length * fs * 1.28 > arcH && fs > 9) {
+      fs -= 1; lines = wrapText(item, fs);
+    }
+    ctx.font = `700 ${fs}px Source Serif 4,Georgia,serif`;
+
+    const lh = fs * 1.28;
+    // Text center: positive = outward; isLeft already flipped so same sign works
+    const xPos = isLeft ? -zoneMid : zoneMid;
+
+    ctx.fillStyle = '#fff';
+    ctx.shadowColor = 'rgba(0,0,0,.65)';
+    ctx.shadowBlur = 5;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    lines.forEach((line, li) => {
+      const yOff = (li - (lines.length - 1) / 2) * lh;
+      ctx.fillText(line, xPos, yOff);
+    });
     ctx.restore();
   });
   // ring
