@@ -346,18 +346,18 @@ function draw(){
       return lines;
     }
 
-    // Start with a generous font size and shrink until everything fits
-    let fs = Math.min(Math.round(availW * 0.23), Math.round(arcH * 0.48));
-    fs = Math.max(fs, 10);
+    // Start font size — capped small for a clean, compact look
+    let fs = Math.min(Math.round(availW * 0.155), Math.round(arcH * 0.33));
+    fs = Math.max(fs, 9);
     let lines = wrapText(item, fs);
 
     // Shrink for vertical overflow
-    while (lines.length * fs * 1.28 > arcH && fs > 9) {
+    while (lines.length * fs * 1.18 > arcH && fs > 8) {
       fs -= 1; lines = wrapText(item, fs);
     }
     // Shrink for horizontal overflow (any single line too wide)
     let anyOverflow = true;
-    while (anyOverflow && fs > 9) {
+    while (anyOverflow && fs > 8) {
       anyOverflow = false;
       ctx.font = `700 ${fs}px Source Serif 4,Georgia,serif`;
       for (const line of lines) {
@@ -367,12 +367,12 @@ function draw(){
       }
     }
     // Final vertical recheck
-    while (lines.length * fs * 1.28 > arcH && fs > 9) {
+    while (lines.length * fs * 1.18 > arcH && fs > 8) {
       fs -= 1; lines = wrapText(item, fs);
     }
     ctx.font = `700 ${fs}px Source Serif 4,Georgia,serif`;
 
-    const lh = fs * 1.28;
+    const lh = fs * 1.18;
     // Text center: positive = outward; isLeft already flipped so same sign works
     const xPos = isLeft ? -zoneMid : zoneMid;
 
