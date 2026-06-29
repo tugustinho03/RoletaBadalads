@@ -35,14 +35,17 @@
   .hdr-logo-sp img{height:58px;object-fit:contain;display:block}
   .strip{background:var(--yellow);text-align:center;padding:5px;font-size:10px;font-weight:900;letter-spacing:.35em;text-transform:uppercase;color:var(--navy);flex-shrink:0;}
   .body{display:flex;flex:1;overflow:hidden;min-height:0}
-  .wheel-area{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;padding:14px 16px;min-width:0;}
+  .wheel-area{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;padding:14px 16px;min-width:0;position:relative;}
   .wheel-wrap{position:relative;flex-shrink:0}
   #wheelCanvas{display:block;border-radius:50%;filter:drop-shadow(0 8px 32px rgba(29,58,95,0.3));}
   .ptr{position:absolute;top:-22px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:20px solid transparent;border-right:20px solid transparent;border-top:44px solid var(--red);filter:drop-shadow(0 4px 8px rgba(0,0,0,0.35));z-index:10;}
   .btn-spin{padding:18px 64px;border:none;border-radius:60px;background:linear-gradient(135deg,#1d3a5f,#2a5898);color:#fff;font-family:'Source Serif 4',Georgia,serif;font-size:clamp(1.1rem,2vw,1.5rem);font-weight:900;letter-spacing:.06em;cursor:pointer;transition:all .22s;box-shadow:0 6px 24px rgba(29,58,95,.45);flex-shrink:0;}
   .btn-spin:hover:not(:disabled){transform:translateY(-3px);box-shadow:0 10px 32px rgba(29,58,95,.55);background:linear-gradient(135deg,#25497a,#1d3a5f);}
   .btn-spin:disabled{opacity:.4;cursor:default;transform:none}
-  .panel{width:280px;flex-shrink:0;display:flex;flex-direction:column;gap:10px;padding:16px 14px 14px;border-left:2px solid #dde8f5;overflow:hidden;}
+  .panel{width:280px;flex-shrink:0;display:flex;flex-direction:column;gap:10px;padding:16px 14px 14px;border-left:2px solid #dde8f5;overflow:hidden;transition:width .35s ease,padding .35s ease,opacity .35s ease,border .35s ease;}
+  .panel.hidden{width:0;padding:0;border:none;opacity:0;overflow:hidden;}
+  .panel-toggle{position:absolute;top:10px;right:10px;z-index:50;padding:6px 13px;border:none;border-radius:20px;background:var(--navy);color:#fff;font-size:.76rem;font-weight:700;letter-spacing:.07em;cursor:pointer;transition:all .2s;box-shadow:0 2px 10px rgba(29,58,95,.35);white-space:nowrap;}
+  .panel-toggle:hover{background:#2a5898;box-shadow:0 4px 14px rgba(29,58,95,.45);}
   .panel-title{font-size:.88rem;font-weight:900;letter-spacing:.2em;text-transform:uppercase;color:var(--navy);padding-bottom:10px;border-bottom:3px solid var(--navy);flex-shrink:0;}
   .add-row{display:flex;gap:8px;flex-shrink:0}
   .add-inp{flex:1;padding:12px 14px;border:2.5px solid #b8d0e8;border-radius:10px;font-family:'Source Serif 4',Georgia,serif;font-size:1.05rem;font-weight:600;color:var(--ink);outline:none;transition:border .2s;}
@@ -169,13 +172,14 @@
     <div class="strip">Roleta da Sorte &middot; Feira de S&atilde;o Pedro &middot; Torres Vedras</div>
     <div class="body">
       <div class="wheel-area" id="wheelArea">
+        <button class="panel-toggle" id="panelToggle" onclick="togglePanel()">&#9881; Op&ccedil;&otilde;es</button>
         <div class="wheel-wrap">
           <div class="ptr"></div>
           <canvas id="wheelCanvas" width="400" height="400"></canvas>
         </div>
         <button class="btn-spin" id="btnSpin" onclick="spin()">&#127744;&nbsp; Girar a Roleta!</button>
       </div>
-      <div class="panel">
+      <div class="panel hidden" id="panel">
         <div class="panel-title">&#127381; Op&ccedil;&otilde;es</div>
         <div class="add-row">
           <input class="add-inp" id="addInp" placeholder="Adicionar&hellip;" maxlength="50" onkeydown="if(event.key==='Enter')add()">
@@ -367,6 +371,15 @@
       raf=requestAnimationFrame(loop);
     })();
     setTimeout(function(){cancelAnimationFrame(raf);c2.clearRect(0,0,c.width,c.height);c.style.display='none';},6000);
+  }
+
+  function togglePanel(){
+    var p=document.getElementById('panel');
+    var t=document.getElementById('panelToggle');
+    var hidden=p.classList.contains('hidden');
+    if(hidden){p.classList.remove('hidden');t.innerHTML='&#10005; Fechar';}
+    else{p.classList.add('hidden');t.innerHTML='&#9881; Op&ccedil;&otilde;es';}
+    setTimeout(function(){sizeWheel();},360);
   }
 
   window.addEventListener('resize',function(){setTimeout(sizeWheel,50);});
